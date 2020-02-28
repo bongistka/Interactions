@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Valve.VR;
@@ -12,6 +13,9 @@ public class SelectionManager : MonoBehaviour
 
     [Range(0.0f, 1.0f)]
     public float selectionPrecision; // selection error threshold, the higher the more precise but harder to select
+    [Range(0.0f, 5.0f)]
+    public float rotationDegree; 
+    public float rayDistance; 
     private float errorPercentage;
     private bool selectionLocked;
     private Interactable selectionInteractable;
@@ -25,24 +29,15 @@ public class SelectionManager : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         Ray ray = new Ray(rightAttachmentPoint.transform.position, rightAttachmentPoint.transform.forward);
         RaycastHit hit;
 
         if (lastSelected != null)
         {
-            // locks selection
-
-            if (SteamVR_Actions._default.GrabPinch.GetStateDown(rightHand.handType))
-            {
-                selectionLocked = true;
-            }
-
-            if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType))
-            {
-                selectionLocked = false;
-            }
+            GrabSelection();
+            RotateSelected();
 
             // prevents accidental deselection
             Vector3 vector1 = ray.direction;
@@ -57,7 +52,7 @@ public class SelectionManager : MonoBehaviour
             }
         }
 
-        if (Physics.Raycast(ray, out hit) && lastSelected == null && !selectionLocked) // only select once and not while carrying something
+        if (Physics.Raycast(ray, out hit, rayDistance) && lastSelected == null && !selectionLocked) // only select once and not while carrying something
         {
             Transform selection = hit.transform;
             selectionInteractable = selection.GetComponent<Interactable>();
@@ -67,7 +62,48 @@ public class SelectionManager : MonoBehaviour
                 lastSelected = selection;
             }
         }
-        
+
+        if (selectionLocked)
+        {
+            MoveObjectToRay(hit);
+        }
+
     }
 
+    private void MoveObjectToRay(RaycastHit hit)
+    {
+        if (hit.point != null && hit.transform.tag == "Floor")
+        {
+            Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+            rb.MovePosition(Vector3.Lerp(lastSelected.transform.position,hit.point,Time.deltaTime));
+            //todo null ref exception
+        }
+
+    }
+
+    private void RotateSelected()
+    {
+        if (SteamVR_Actions._default.SnapTurnLeft.GetStateDown(rightHand.handType))
+        {
+            lastSelected.Rotate(0, rotationDegree, 0);
+        }
+
+        if (SteamVR_Actions._default.SnapTurnRight.GetStateDown(rightHand.handType))
+        {
+            lastSelected.Rotate(0, -rotationDegree, 0);
+        }
+    }
+
+    private void GrabSelection()
+    {
+        if (SteamVR_Actions._default.GrabPinch.GetStateDown(rightHand.handType))
+        {
+            selectionLocked = true;
+        }
+
+        if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType))
+        {
+            selectionLocked = false;
+        }
+    }
 }
