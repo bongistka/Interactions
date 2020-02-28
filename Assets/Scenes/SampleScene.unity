@@ -525,7 +525,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rightAttachmentPoint: {fileID: 427263311}
   rightHand: {fileID: 888925745}
-  selectionPercentage: 0.97
+  selectionPrecision: 0.8
   lastSelected: {fileID: 0}
 --- !u!4 &760313494
 Transform:
