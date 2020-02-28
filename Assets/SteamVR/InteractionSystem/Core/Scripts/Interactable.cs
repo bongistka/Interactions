@@ -259,7 +259,7 @@ namespace Valve.VR.InteractionSystem
         /// <summary>
         /// Called when a Hand stops hovering over this object
         /// </summary>
-        protected virtual void OnHandHoverEnd(Hand hand)
+        public virtual void OnHandHoverEnd(Hand hand)
         {
             wasHovering = isHovering;
 
