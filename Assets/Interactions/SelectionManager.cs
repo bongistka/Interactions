@@ -7,30 +7,39 @@ using Valve.VR.InteractionSystem;
 
 public class SelectionManager : MonoBehaviour
 {
-    //todo handedness/controller active or whatever lets us choose which controler to draw ray from
+    // todo handedness/controller active or whatever lets us choose which controler to draw ray from
     public GameObject rightAttachmentPoint;
     public Hand rightHand;
 
     [Range(0.0f, 1.0f)]
     public float selectionPrecision; // selection error threshold, the higher the more precise but harder to select
+    [Range(1.0f, 10.0f)]
+    public float yMovementSpeed; // multiplicator of Y movement
     [Range(0.0f, 5.0f)]
     public float rotationDegree; 
     public float rayDistance; 
     private float errorPercentage;
     private bool selectionLocked;
+    private bool sideMovementLocked;
     private Interactable selectionInteractable;
+    private Vector3 handLastPosition;
 
     [SerializeField] private Transform lastSelected;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        handLastPosition = rightAttachmentPoint.transform.position;
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
+        if (selectionLocked)
+        {
+            MoveObjectY();
+        }
+
         Ray ray = new Ray(rightAttachmentPoint.transform.position, rightAttachmentPoint.transform.forward);
         RaycastHit hit;
 
@@ -48,6 +57,8 @@ public class SelectionManager : MonoBehaviour
             if (errorPercentage < selectionPrecision && !selectionLocked)
             {
                 selectionInteractable.OnHandHoverEnd(rightHand);
+                Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+                rb.isKinematic = false;
                 lastSelected = null;
             }
         }
@@ -63,20 +74,49 @@ public class SelectionManager : MonoBehaviour
             }
         }
 
-        if (selectionLocked)
+        if (selectionLocked && !sideMovementLocked)
         {
             MoveObjectToRay(hit);
         }
+        handLastPosition = rightAttachmentPoint.transform.position;
+    }
 
+    private void MoveObjectY()
+    {
+        // moves along Y axis if vertical hand motion detected
+        Vector3 currentPosition = rightAttachmentPoint.transform.position;
+        Vector3 difference = currentPosition - handLastPosition;
+
+        Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+        rb.isKinematic = true;
+
+        if ((Mathf.Abs(difference.x) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.z) < Mathf.Abs(difference.y)))
+        {
+            sideMovementLocked = true;
+            
+            Vector3 objectPosition = lastSelected.gameObject.transform.position;
+            rb.MovePosition(new Vector3(objectPosition.x, objectPosition.y + difference.y * yMovementSpeed, objectPosition.z));
+            //Debug.Log( "rb moved up");
+        } else
+        {
+            rb.isKinematic = false;
+            sideMovementLocked = false;
+        }
     }
 
     private void MoveObjectToRay(RaycastHit hit)
     {
-        if (hit.point != null && hit.transform.tag == "Floor")
+        try
         {
-            Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
-            rb.MovePosition(Vector3.Lerp(lastSelected.transform.position,hit.point,Time.deltaTime));
-            //todo null ref exception
+            if (hit.point != null && hit.transform.tag == "Floor")
+            {
+                Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+                rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, new Vector3(hit.point.x, lastSelected.transform.position.y, hit.point.z), Time.deltaTime));
+
+            }
+        } catch (NullReferenceException e)
+        {
+            handLastPosition = rightAttachmentPoint.transform.position;
         }
 
     }
