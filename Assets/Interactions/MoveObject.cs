@@ -20,15 +20,30 @@ public class MoveObject : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         LockSelection();
         if (selector.selectionLocked)
         {
             DoMoveObject();
-        } else
+            //DoRotateObject();
+        }
+        else
         {
             DoReleaseObject();
+        }
+    }
+
+    private void DoRotateObject()
+    {
+        if (SteamVR_Actions._default.SnapTurnLeft.GetStateDown(selector.rightHand.handType))
+        {
+            selector.lastSelected.Rotate(new Vector3(0, 1, 0), Space.Self);
+        }
+
+        if (SteamVR_Actions._default.SnapTurnRight.GetStateDown(selector.rightHand.handType))
+        {
+            selector.lastSelected.Rotate(new Vector3(0, -1, 0), Space.Self);
         }
     }
 
