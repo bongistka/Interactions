@@ -64,7 +64,7 @@ public class Selector : MonoBehaviour
         if (errorPercentage < selectionPrecision && !selectionLocked)
         {
             selectionInteractable.OnHandHoverEnd(rightHand);
-            //Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+            //lastSelected.gameObject.GetComponent<Rigidbody>().useGravity = true;
             //rb.isKinematic = false;
             lastSelected = null;
         }

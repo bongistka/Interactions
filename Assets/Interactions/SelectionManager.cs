@@ -116,6 +116,7 @@ public class SelectionManager : MonoBehaviour
             }
         } catch (NullReferenceException e)
         {
+            Debug.Log(e);
             handLastPosition = rightAttachmentPoint.transform.position;
         }
 
