@@ -7,6 +7,8 @@ using Valve.VR.InteractionSystem;
 
 public class SelectionManager : MonoBehaviour
 {
+    public int changeMovementTime = 50;
+
     // todo handedness/controller active or whatever lets us choose which controler to draw ray from
     public GameObject rightAttachmentPoint;
     public Hand rightHand;
@@ -26,6 +28,7 @@ public class SelectionManager : MonoBehaviour
 
     [SerializeField] private Transform lastSelected;
     private Vector3 lastHit;
+    private int framesToLift = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -38,7 +41,7 @@ public class SelectionManager : MonoBehaviour
     {
         if (selectionLocked)
         {
-            MoveObjectY();
+            //MoveObjectY();
         }
 
         Ray ray = new Ray(rightAttachmentPoint.transform.position, rightAttachmentPoint.transform.forward);
@@ -85,26 +88,16 @@ public class SelectionManager : MonoBehaviour
     private void MoveObjectY()
     {
         // moves along Y axis if vertical hand motion detected
-        Vector3 currentPosition = rightAttachmentPoint.transform.position;
-        Vector3 difference = currentPosition - handLastPosition;
+
 
         Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
         rb.isKinematic = true;
 
-        if ((Mathf.Abs(difference.x) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.z) < Mathf.Abs(difference.y)))
-        {
-            sideMovementLocked = true;
-            //rb.isKinematic = true;
-            //rb.useGravity = false;
+        sideMovementLocked = true;
+        //rb.isKinematic = true;
+        //rb.useGravity = false;
 
-            lastSelected.parent = rightAttachmentPoint.transform;
-            //Debug.Log( "rb moved up");
-        } else
-        {
-            //lastSelected.parent = null;
-            sideMovementLocked = false;
-            rb.isKinematic = false;
-        }
+        lastSelected.parent = rightAttachmentPoint.transform;
     }
 
     private void MoveObjectToRay(RaycastHit hit)
@@ -114,15 +107,27 @@ public class SelectionManager : MonoBehaviour
             Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
             if (hit.point != null && hit.transform.CompareTag("Floor"))
             {
+                //sideMovementLocked = false;
                 rb.isKinematic = false;
                 lastSelected.parent = null;
-                lastHit = new Vector3(hit.point.x, lastSelected.transform.position.y, hit.point.z);
-                rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, new Vector3(hit.point.x, lastSelected.transform.position.y, hit.point.z), Time.deltaTime));
-
+                lastHit = hit.point;
+                rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime));
+                framesToLift = 0;
             }
             else
             {
-                rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime));
+                if (framesToLift < changeMovementTime)
+                {
+                    framesToLift += 1;
+                    rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime));
+                } else
+                {
+                    MoveObjectY();
+                    
+                }
+                
+                //MoveObjectY();
+
             }
         } catch (NullReferenceException e)
         {
@@ -150,11 +155,14 @@ public class SelectionManager : MonoBehaviour
     {
         if (SteamVR_Actions._default.GrabPinch.GetStateDown(rightHand.handType))
         {
+            
+            lastSelected.gameObject.layer = 2;
             selectionLocked = true;
         }
 
         if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType))
         {
+            lastSelected.gameObject.layer = 0;
             lastSelected.parent = null;
             lastSelected.gameObject.GetComponent<Rigidbody>().isKinematic = false;
             //lastSelected.gameObject.GetComponent<Rigidbody>().useGravity = true;
