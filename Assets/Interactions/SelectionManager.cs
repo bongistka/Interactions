@@ -10,8 +10,8 @@ public class SelectionManager : MonoBehaviour
     public int changeMovementTime = 50;
 
     // todo handedness/controller active or whatever lets us choose which controler to draw ray from
-    public GameObject rightAttachmentPoint;
-    public Hand rightHand;
+    public GameObject handAttachmentPoint;
+    public Hand hand;
 
     [Range(0.0f, 1.0f)]
     public float selectionPrecision; // selection error threshold, the higher the more precise but harder to select
@@ -33,7 +33,7 @@ public class SelectionManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        handLastPosition = rightAttachmentPoint.transform.position;
+        handLastPosition = handAttachmentPoint.transform.position;
     }
 
     // Update is called once per frame
@@ -44,7 +44,7 @@ public class SelectionManager : MonoBehaviour
             //MoveObjectY();
         }
 
-        Ray ray = new Ray(rightAttachmentPoint.transform.position, rightAttachmentPoint.transform.forward);
+        Ray ray = new Ray(handAttachmentPoint.transform.position, handAttachmentPoint.transform.forward);
         RaycastHit hit;
 
         if (lastSelected != null)
@@ -60,7 +60,7 @@ public class SelectionManager : MonoBehaviour
 
             if (errorPercentage < selectionPrecision && !selectionLocked)
             {
-                selectionInteractable.OnHandHoverEnd(rightHand);
+                selectionInteractable.OnHandHoverEnd(hand);
                 Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
                 rb.isKinematic = false;
                 lastSelected = null;
@@ -73,7 +73,7 @@ public class SelectionManager : MonoBehaviour
             selectionInteractable = selection.GetComponent<Interactable>();
             if (selectionInteractable != null) // takes care of not selecting anything that is not interactable and highlights at the same time
             {
-                selectionInteractable.OnHandHoverBegin(rightHand);
+                selectionInteractable.OnHandHoverBegin(hand);
                 lastSelected = selection;
             }
         }
@@ -82,7 +82,7 @@ public class SelectionManager : MonoBehaviour
         {
             MoveObjectToRay(hit);
         }
-        handLastPosition = rightAttachmentPoint.transform.position;
+        handLastPosition = handAttachmentPoint.transform.position;
     }
 
     private void MoveObjectY()
@@ -97,7 +97,7 @@ public class SelectionManager : MonoBehaviour
         //rb.isKinematic = true;
         //rb.useGravity = false;
 
-        lastSelected.parent = rightAttachmentPoint.transform;
+        lastSelected.parent = handAttachmentPoint.transform;
     }
 
     private void MoveObjectToRay(RaycastHit hit)
@@ -134,18 +134,18 @@ public class SelectionManager : MonoBehaviour
             
             //Debug.Log(e);
         }
-        handLastPosition = rightAttachmentPoint.transform.position;
+        handLastPosition = handAttachmentPoint.transform.position;
 
     }
 
     private void RotateSelected()
     {
-        if (SteamVR_Actions._default.SnapTurnLeft.GetStateDown(rightHand.handType))
+        if (SteamVR_Actions._default.SnapTurnLeft.GetStateDown(hand.handType))
         {
             lastSelected.Rotate(0, rotationDegree, 0);
         }
 
-        if (SteamVR_Actions._default.SnapTurnRight.GetStateDown(rightHand.handType))
+        if (SteamVR_Actions._default.SnapTurnRight.GetStateDown(hand.handType))
         {
             lastSelected.Rotate(0, -rotationDegree, 0);
         }
@@ -153,14 +153,14 @@ public class SelectionManager : MonoBehaviour
 
     private void GrabSelection()
     {
-        if (SteamVR_Actions._default.GrabPinch.GetStateDown(rightHand.handType))
+        if (SteamVR_Actions._default.GrabPinch.GetStateDown(hand.handType))
         {
             
             lastSelected.gameObject.layer = 2;
             selectionLocked = true;
         }
 
-        if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType))
+        if (SteamVR_Actions._default.GrabPinch.GetStateUp(hand.handType))
         {
             lastSelected.gameObject.layer = 0;
             lastSelected.parent = null;
