@@ -31,7 +31,7 @@ public class InteractionManager : MonoBehaviour
     [Range(1.0f, 5.0f)]
     public float movementSpeed = 2.0f;
 
-    public int waitTillMove = 90;
+    public int waitTillMove = 20;
     private int waitUp = 0;
     private int waitDown = 0;
 
@@ -111,19 +111,41 @@ public class InteractionManager : MonoBehaviour
             lastSelected.gameObject.layer = 0;
             lastSelected = null;
             selectionLocked = false;
+            waitUp = 0;
+            waitDown = 0;
         }
     }
 
     private void MoveObjectToRay(Ray ray)
     {
-        Physics.Raycast(ray, out RaycastHit hit, rayDistance);
         Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
-        if (hit.point != null && hit.transform.CompareTag("Floor"))
+
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, 1 << LayerMask.NameToLayer("Floor")))
         {
+            waitUp = 0;
+            if (waitDown < waitTillMove)
+            {
+                waitDown += 1;
+            }
+            else
+            {
+
+            }
+
             lastHit = hit.point;
             rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime * movementSpeed));
         } else
         {
+            waitDown = 0;
+            if (waitUp < waitTillMove)
+            {
+                waitUp += 1;
+            }
+            else
+            {
+
+            }
+            
             rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime * movementSpeed));
         }
 
