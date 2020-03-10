@@ -7,7 +7,8 @@ using Valve.VR.InteractionSystem;
 public class Selector : MonoBehaviour
 {
     private Raycaster raycaster;
-    private RaycastHit hit;
+    [HideInInspector]
+    public RaycastHit hit;
     public float selectionDistance = 100.0f;
     [Range(0.0f, 1.0f)]
     public float selectionPrecision; // selection error threshold, the higher the more precise but harder to select

@@ -8,15 +8,21 @@ using Valve.VR.InteractionSystem;
 [RequireComponent(typeof(Selector), typeof(Raycaster))]
 public class MoveObject : MonoBehaviour
 {
+    [Range(0.0f, 1.0f)]
+    public float yMovementThreshold = 0.2f;
+
     //private Hand.AttachmentFlags attachmentFlags = Hand.defaultAttachmentFlags & (~Hand.AttachmentFlags.SnapOnAttach) & (~Hand.AttachmentFlags.DetachOthers) & (~Hand.AttachmentFlags.VelocityMovement);
     private Selector selector;
     private Raycaster raycaster;
+    private Vector3 handLastPosition;
+    private bool sideMovementLocked;
 
     // Start is called before the first frame update
     void Start()
     {
         selector = GetComponent<Selector>();
         raycaster = GetComponent<Raycaster>();
+        handLastPosition = raycaster.rightAttachmentPoint.transform.position;
     }
 
     // Update is called once per frame
@@ -25,13 +31,20 @@ public class MoveObject : MonoBehaviour
         LockSelection();
         if (selector.selectionLocked)
         {
-            DoMoveObject();
+            
+            MoveObjectY();
+
+            if (!sideMovementLocked)
+            {
+                MoveObjectToRay(selector.hit);
+            }
             //DoRotateObject();
         }
         else
         {
-            DoReleaseObject();
+            ReleaseObject();
         }
+        handLastPosition = raycaster.rightAttachmentPoint.transform.position;
     }
 
     private void DoRotateObject()
@@ -47,7 +60,7 @@ public class MoveObject : MonoBehaviour
         }
     }
 
-    private void DoReleaseObject()
+    private void ReleaseObject()
     {
         if (selector.lastSelected != null)
         {
@@ -56,7 +69,7 @@ public class MoveObject : MonoBehaviour
         }    
     }
 
-    private void DoMoveObject()
+    private void MoveObjectY()
     {
         /*
         Transform transformOffsett = new GameObject().transform;
@@ -71,24 +84,69 @@ public class MoveObject : MonoBehaviour
         raycaster.rightAttachmentPoint.GetComponent<FixedJoint>().connectedBody = selector.lastSelected.GetComponent<Rigidbody>();
         */
 
-        if (selector.lastSelected != null)
-        {
-            selector.lastSelected.GetComponent<Rigidbody>().useGravity = false;
-            selector.lastSelected.parent = raycaster.rightAttachmentPoint.transform;
-        }
         
+
+        // moves along Y axis if vertical hand motion detected
+        Vector3 currentPosition = raycaster.rightAttachmentPoint.transform.position;
+        Vector3 difference = currentPosition - handLastPosition;
+
+        //Rigidbody rb = selector.lastSelected.gameObject.GetComponent<Rigidbody>();
+        //rb.isKinematic = true;
+
+        if ((Mathf.Abs(difference.x) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.z) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.y) > yMovementThreshold))
+        {
+            sideMovementLocked = true;
+
+            //Vector3 objectPosition = lastSelected.gameObject.transform.position;
+            //rb.MovePosition(new Vector3(objectPosition.x, objectPosition.y + difference.y * yMovementSpeed, objectPosition.z));
+            //Debug.Log( "rb moved up");
+            if (selector.lastSelected != null)
+            {
+                selector.lastSelected.GetComponent<Rigidbody>().useGravity = false;
+                selector.lastSelected.parent = raycaster.rightAttachmentPoint.transform;
+            }
+
+        }
+        else
+        {
+            //rb.isKinematic = false;
+            sideMovementLocked = false;
+            selector.lastSelected.GetComponent<Rigidbody>().useGravity = true;
+        }
+
+    }
+
+    private void MoveObjectToRay(RaycastHit hit)
+    {
+        try
+        {
+            if (hit.point != null && hit.transform.CompareTag("Floor"))
+            {
+                Rigidbody rb = selector.lastSelected.gameObject.GetComponent<Rigidbody>();
+                rb.MovePosition(Vector3.Lerp(selector.lastSelected.transform.position, new Vector3(hit.point.x, selector.lastSelected.transform.position.y, hit.point.z), Time.deltaTime));
+
+            }
+        }
+        catch (NullReferenceException e)
+        {
+            Debug.Log(e);
+            handLastPosition = raycaster.rightAttachmentPoint.transform.position;
+        }
+
     }
 
     private void LockSelection()
     {
         if (SteamVR_Actions._default.GrabPinch.GetStateDown(selector.rightHand.handType))
         {
+            selector.lastSelected.gameObject.layer = 2;
             selector.selectionLocked = true;
         }
 
         if (SteamVR_Actions._default.GrabPinch.GetStateUp(selector.rightHand.handType))
         {
-            selector.selectionLocked = false;
+            selector.lastSelected.gameObject.layer = 0;
+            selector.selectionLocked = false;           
         }
     }
 }
