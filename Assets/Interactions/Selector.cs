@@ -75,14 +75,15 @@ public class Selector : MonoBehaviour
 
     private void LockSelection()
     {
-        if (SteamVR_Actions._default.GrabGrip.GetStateDown(rightHand.handType) && lastHighlighted != null)
+        if (SteamVR_Actions._default.GrabPinch.GetStateDown(rightHand.handType) && lastHighlighted != null)
         {
             lastSelected = lastHighlighted;
+            lastSelected.GetComponent<Rigidbody>().isKinematic = true;
             lastSelected.gameObject.layer = 2;
             selectionLocked = true;
         }
 
-        if (SteamVR_Actions._default.GrabGrip.GetStateUp(rightHand.handType) && lastSelected != null)
+        if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType) && lastSelected != null)
         {
             lastSelected.gameObject.layer = 0;
             selectionLocked = false;

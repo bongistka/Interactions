@@ -33,7 +33,7 @@ public class MoveObject : MonoBehaviour
             {
                 MoveObjectToRay(selector.hit);
             }
-            MoveObjectY();
+            //MoveObjectY();
             //RotateObject();
         }
         else
@@ -61,9 +61,11 @@ public class MoveObject : MonoBehaviour
         if (selector.lastSelected != null)
         {
             //Debug.Log("Object " + selector.lastSelected + " was released");
-            selector.lastSelected.GetComponent<Rigidbody>().useGravity = true;
-            selector.lastSelected.GetComponent<Rigidbody>().velocity = Vector3.zero;
-            selector.lastSelected.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            //selector.lastSelected.GetComponent<Rigidbody>().useGravity = true;
+            selector.lastSelected.GetComponent<Rigidbody>().Sleep();
+            selector.lastSelected.GetComponent<Rigidbody>().isKinematic = false;
+            //selector.lastSelected.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            //selector.lastSelected.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             selector.lastSelected.parent = null;
             selector.lastSelected = null;
         }    
@@ -81,7 +83,8 @@ public class MoveObject : MonoBehaviour
 
             if (selector.lastSelected != null)
             {
-                selector.lastSelected.GetComponent<Rigidbody>().useGravity = false;
+                //selector.lastSelected.GetComponent<Rigidbody>().useGravity = false;
+                
                 selector.lastSelected.parent = raycaster.rightAttachmentPoint.transform;
                 selector.lastSelected.GetComponent<Rigidbody>().velocity = Vector3.zero;
                 selector.lastSelected.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
