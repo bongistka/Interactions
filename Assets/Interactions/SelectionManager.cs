@@ -25,6 +25,7 @@ public class SelectionManager : MonoBehaviour
     private Vector3 handLastPosition;
 
     [SerializeField] private Transform lastSelected;
+    private Vector3 lastHit;
 
     // Start is called before the first frame update
     void Start()
@@ -93,14 +94,16 @@ public class SelectionManager : MonoBehaviour
         if ((Mathf.Abs(difference.x) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.z) < Mathf.Abs(difference.y)))
         {
             sideMovementLocked = true;
-            
-            Vector3 objectPosition = lastSelected.gameObject.transform.position;
-            rb.MovePosition(new Vector3(objectPosition.x, objectPosition.y + difference.y * yMovementSpeed, objectPosition.z));
+            //rb.isKinematic = true;
+            //rb.useGravity = false;
+
+            lastSelected.parent = rightAttachmentPoint.transform;
             //Debug.Log( "rb moved up");
         } else
         {
-            rb.isKinematic = false;
+            //lastSelected.parent = null;
             sideMovementLocked = false;
+            rb.isKinematic = false;
         }
     }
 
@@ -108,17 +111,25 @@ public class SelectionManager : MonoBehaviour
     {
         try
         {
-            if (hit.point != null && hit.transform.tag == "Floor")
+            Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+            if (hit.point != null && hit.transform.CompareTag("Floor"))
             {
-                Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
+                rb.isKinematic = false;
+                lastSelected.parent = null;
+                lastHit = new Vector3(hit.point.x, lastSelected.transform.position.y, hit.point.z);
                 rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, new Vector3(hit.point.x, lastSelected.transform.position.y, hit.point.z), Time.deltaTime));
 
             }
+            else
+            {
+                rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime));
+            }
         } catch (NullReferenceException e)
         {
-            Debug.Log(e);
-            handLastPosition = rightAttachmentPoint.transform.position;
+            
+            //Debug.Log(e);
         }
+        handLastPosition = rightAttachmentPoint.transform.position;
 
     }
 
@@ -144,7 +155,11 @@ public class SelectionManager : MonoBehaviour
 
         if (SteamVR_Actions._default.GrabPinch.GetStateUp(rightHand.handType))
         {
+            lastSelected.parent = null;
+            lastSelected.gameObject.GetComponent<Rigidbody>().isKinematic = false;
+            //lastSelected.gameObject.GetComponent<Rigidbody>().useGravity = true;
             selectionLocked = false;
+            sideMovementLocked = false;
         }
     }
 }
