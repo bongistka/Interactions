@@ -32,7 +32,7 @@ public class Raycaster : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         ray = new Ray(rightAttachmentPoint.transform.position, rightAttachmentPoint.transform.forward);
     }

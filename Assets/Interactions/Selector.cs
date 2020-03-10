@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Valve.VR;
 using Valve.VR.InteractionSystem;
 
 [RequireComponent(typeof(Raycaster))]
@@ -15,6 +16,8 @@ public class Selector : MonoBehaviour
     private float errorPercentage;
     [HideInInspector]
     public Interactable selectionInteractable;
+    [HideInInspector]
+    public Transform lastHighlighted;
     [HideInInspector]
     public Transform lastSelected;
     [HideInInspector]
@@ -31,13 +34,14 @@ public class Selector : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        if (lastSelected != null)
+        LockSelection();
+        if (lastHighlighted != null)
         {
             ShouldDeselect();
         }
-        if (Physics.Raycast(raycaster.ray, out hit, selectionDistance) && lastSelected == null && !selectionLocked) // only select once and not while carrying something
+        if (Physics.Raycast(raycaster.ray, out hit, selectionDistance) && lastHighlighted == null && !selectionLocked) // only select once and not while carrying something
         {
             ShouldSelect();
         }
@@ -50,7 +54,7 @@ public class Selector : MonoBehaviour
         if (selectionInteractable != null) // takes care of not selecting anything that is not interactable and highlights at the same time
         {
             selectionInteractable.OnHandHoverBegin(rightHand);
-            lastSelected = selection;
+            lastHighlighted = selection;
         }
     }
 
@@ -58,16 +62,30 @@ public class Selector : MonoBehaviour
     {
         // prevents accidental deselection
         Vector3 vector1 = raycaster.ray.direction;
-        Vector3 vector2 = lastSelected.position - raycaster.ray.origin;
+        Vector3 vector2 = lastHighlighted.position - raycaster.ray.origin;
 
         errorPercentage = Vector3.Dot(vector1.normalized, vector2.normalized);
 
         if (errorPercentage < selectionPrecision && !selectionLocked)
         {
             selectionInteractable.OnHandHoverEnd(rightHand);
-            //lastSelected.gameObject.GetComponent<Rigidbody>().useGravity = true;
-            //rb.isKinematic = false;
-            lastSelected = null;
+            lastHighlighted = null;
+        }
+    }
+
+    private void LockSelection()
+    {
+        if (SteamVR_Actions._default.GrabGrip.GetStateDown(rightHand.handType) && lastHighlighted != null)
+        {
+            lastSelected = lastHighlighted;
+            lastSelected.gameObject.layer = 2;
+            selectionLocked = true;
+        }
+
+        if (SteamVR_Actions._default.GrabGrip.GetStateUp(rightHand.handType) && lastSelected != null)
+        {
+            lastSelected.gameObject.layer = 0;
+            selectionLocked = false;
         }
     }
 }

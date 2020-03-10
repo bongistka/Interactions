@@ -10,8 +10,7 @@ public class MoveObject : MonoBehaviour
 {
     [Range(0.0f, 1.0f)]
     public float yMovementThreshold = 0.2f;
-
-    //private Hand.AttachmentFlags attachmentFlags = Hand.defaultAttachmentFlags & (~Hand.AttachmentFlags.SnapOnAttach) & (~Hand.AttachmentFlags.DetachOthers) & (~Hand.AttachmentFlags.VelocityMovement);
+    
     private Selector selector;
     private Raycaster raycaster;
     private Vector3 handLastPosition;
@@ -28,17 +27,14 @@ public class MoveObject : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        LockSelection();
         if (selector.selectionLocked)
         {
-            
-            MoveObjectY();
-
             if (!sideMovementLocked)
             {
                 MoveObjectToRay(selector.hit);
             }
-            //DoRotateObject();
+            MoveObjectY();
+            //RotateObject();
         }
         else
         {
@@ -47,7 +43,7 @@ public class MoveObject : MonoBehaviour
         handLastPosition = raycaster.rightAttachmentPoint.transform.position;
     }
 
-    private void DoRotateObject()
+    private void RotateObject()
     {
         if (SteamVR_Actions._default.SnapTurnLeft.GetStateDown(selector.rightHand.handType))
         {
@@ -64,54 +60,37 @@ public class MoveObject : MonoBehaviour
     {
         if (selector.lastSelected != null)
         {
+            //Debug.Log("Object " + selector.lastSelected + " was released");
             selector.lastSelected.GetComponent<Rigidbody>().useGravity = true;
+            selector.lastSelected.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            selector.lastSelected.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             selector.lastSelected.parent = null;
+            selector.lastSelected = null;
         }    
     }
 
     private void MoveObjectY()
     {
-        /*
-        Transform transformOffsett = new GameObject().transform;
-        transformOffsett.position = raycaster.rightAttachmentPoint.transform.position - selector.lastSelected.transform.position;
-        transformOffsett.rotation = Quaternion.Inverse(raycaster.rightAttachmentPoint.transform.localRotation * selector.lastSelected.transform.localRotation);
-        
-        GrabTypes startingGrabType = selector.rightHand.GetGrabStarting();
-        selector.rightHand.AttachObject(selector.lastSelected.gameObject, startingGrabType, attachmentFlags);
-        
-        raycaster.rightAttachmentPoint.AddComponent<Rigidbody>();
-        raycaster.rightAttachmentPoint.AddComponent<FixedJoint>();
-        raycaster.rightAttachmentPoint.GetComponent<FixedJoint>().connectedBody = selector.lastSelected.GetComponent<Rigidbody>();
-        */
-
-        
-
         // moves along Y axis if vertical hand motion detected
         Vector3 currentPosition = raycaster.rightAttachmentPoint.transform.position;
         Vector3 difference = currentPosition - handLastPosition;
-
-        //Rigidbody rb = selector.lastSelected.gameObject.GetComponent<Rigidbody>();
-        //rb.isKinematic = true;
 
         if ((Mathf.Abs(difference.x) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.z) < Mathf.Abs(difference.y)) && (Mathf.Abs(difference.y) > yMovementThreshold))
         {
             sideMovementLocked = true;
 
-            //Vector3 objectPosition = lastSelected.gameObject.transform.position;
-            //rb.MovePosition(new Vector3(objectPosition.x, objectPosition.y + difference.y * yMovementSpeed, objectPosition.z));
-            //Debug.Log( "rb moved up");
             if (selector.lastSelected != null)
             {
                 selector.lastSelected.GetComponent<Rigidbody>().useGravity = false;
                 selector.lastSelected.parent = raycaster.rightAttachmentPoint.transform;
+                selector.lastSelected.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                selector.lastSelected.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             }
 
         }
         else
         {
-            //rb.isKinematic = false;
             sideMovementLocked = false;
-            selector.lastSelected.GetComponent<Rigidbody>().useGravity = true;
         }
 
     }
@@ -129,24 +108,9 @@ public class MoveObject : MonoBehaviour
         }
         catch (NullReferenceException e)
         {
-            Debug.Log(e);
+            //Debug.Log(e);
             handLastPosition = raycaster.rightAttachmentPoint.transform.position;
         }
 
-    }
-
-    private void LockSelection()
-    {
-        if (SteamVR_Actions._default.GrabPinch.GetStateDown(selector.rightHand.handType))
-        {
-            selector.lastSelected.gameObject.layer = 2;
-            selector.selectionLocked = true;
-        }
-
-        if (SteamVR_Actions._default.GrabPinch.GetStateUp(selector.rightHand.handType))
-        {
-            selector.lastSelected.gameObject.layer = 0;
-            selector.selectionLocked = false;           
-        }
     }
 }
