@@ -649,7 +649,7 @@ namespace Valve.VR.InteractionSystem
 			{
 				if ( teleportMarker != null && teleportMarker.markerActive && teleportMarker.gameObject != null )
 				{
-					teleportMarker.gameObject.SetActive( false );
+					//teleportMarker.gameObject.SetActive( false );
 				}
 			}
 
@@ -825,7 +825,7 @@ namespace Valve.VR.InteractionSystem
 
 
 		//-------------------------------------------------
-		private void InitiateTeleportFade()
+		public void InitiateTeleportFade()
 		{
 			teleporting = true;
 
@@ -845,7 +845,7 @@ namespace Valve.VR.InteractionSystem
 			headAudioSource.transform.localPosition = Vector3.zero;
 			PlayAudioClip( headAudioSource, teleportSound );
 
-			Invoke( "TeleportPlayer", currentFadeTime );
+			Invoke( "TeleportPlayer", currentFadeTime ); //to be commented out
 		}
 
 
