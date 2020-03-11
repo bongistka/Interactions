@@ -26,6 +26,7 @@ public class InteractionManager : MonoBehaviour
     [Range(1.0f, 5.0f)]
     public float movementSpeed = 2.0f;
     public float rotationDegree = 0.5f;
+    public float scalingFactor = 1.1f;
 
     [SerializeField] private Transform lastHighlighted;
     [SerializeField] private Transform lastSelected;
@@ -34,10 +35,16 @@ public class InteractionManager : MonoBehaviour
     private bool selectionLocked;
 
     private Vector3 lastHit;
+    
 
     // Start is called before the first frame update
     void Start()
     {
+        if (!SteamVR.active)
+        {
+            this.enabled = false;
+            return;
+        }
         switch (handedness)
         {
             case Handedness.right:
@@ -66,6 +73,19 @@ public class InteractionManager : MonoBehaviour
             MoveObjectToRay(ray);
             DeleteObject();
             RotateObject();
+            ScaleObject();
+        }
+    }
+
+    private void ScaleObject()
+    {
+        if (SteamVR_Input.GetState("ScaleUp", hand.handType))
+        {
+            lastSelected.transform.localScale *= scalingFactor;
+        }
+        if (SteamVR_Input.GetState("ScaleDown", hand.handType))
+        {
+            lastSelected.transform.localScale *= 2 - scalingFactor;
         }
     }
 

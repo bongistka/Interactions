@@ -105,6 +105,22 @@ namespace Valve.VR
             }
         }
         
+        public virtual SteamVR_Action_Boolean ScaleUp
+        {
+            get
+            {
+                return SteamVR_Actions.default_ScaleUp;
+            }
+        }
+        
+        public virtual SteamVR_Action_Boolean ScaleDown
+        {
+            get
+            {
+                return SteamVR_Actions.default_ScaleDown;
+            }
+        }
+        
         public virtual SteamVR_Action_Vibration Haptic
         {
             get

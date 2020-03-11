@@ -1891,11 +1891,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Interactions
       objectReference: {fileID: 0}
-    - target: {fileID: 1535349098447189624, guid: f9693b3d140ae164d9bb38e8a0861205,
-        type: 3}
-      propertyPath: rotationDegree
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 1535349098447189625, guid: f9693b3d140ae164d9bb38e8a0861205,
         type: 3}
       propertyPath: m_LocalPosition.x

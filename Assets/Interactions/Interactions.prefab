@@ -48,5 +48,6 @@ MonoBehaviour:
   selectionPrecision: 0.8
   movementSpeed: 2
   rotationDegree: 0.5
+  scalingFactor: 1.01
   lastHighlighted: {fileID: 0}
   lastSelected: {fileID: 0}
