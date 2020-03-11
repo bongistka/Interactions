@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Valve.VR;
@@ -13,19 +14,10 @@ public class InteractionManager : MonoBehaviour
     };
     public Handedness handedness;
 
-    public enum DefaultMovement
-    {
-        horizontal,
-        vertical,
-    };
-    [Tooltip("Preferred type of movement.")]
-    public DefaultMovement defaultMovement; 
-
     private GameObject handAttachmentPoint;
     private Hand hand;
 
-    public float rayDistance = 100;
-    public int waitTillMove = 2;
+    public float rayDistance = 20;
 
     [Tooltip("Selection error threshold, the higher the more precise but harder to select.")]
     [Range(0.0f, 1.0f)]
@@ -33,6 +25,7 @@ public class InteractionManager : MonoBehaviour
     [Tooltip("Speed of horizontal lerp.")]
     [Range(1.0f, 5.0f)]
     public float movementSpeed = 2.0f;
+    public float rotationDegree = 0.5f;
 
     [SerializeField] private Transform lastHighlighted;
     [SerializeField] private Transform lastSelected;
@@ -41,10 +34,6 @@ public class InteractionManager : MonoBehaviour
     private bool selectionLocked;
 
     private Vector3 lastHit;
-
-    [SerializeField] private int waitUp = 0;
-    [SerializeField] private int waitDown = 0;
-    public string hittingWhat;
 
     // Start is called before the first frame update
     void Start()
@@ -59,16 +48,6 @@ public class InteractionManager : MonoBehaviour
                 break;
         }
         hand = handAttachmentPoint.GetComponentInParent<Hand>();
-
-        switch (defaultMovement)
-        {
-            case DefaultMovement.horizontal:
-                waitDown = waitTillMove;
-                break;
-            case DefaultMovement.vertical:
-                waitUp = waitTillMove;
-                break;
-        }
     }
 
     // Update is called once per frame
@@ -76,29 +55,53 @@ public class InteractionManager : MonoBehaviour
     {
         Ray ray = new Ray(handAttachmentPoint.transform.position, handAttachmentPoint.transform.forward);
         Select(ray);
-        Deselect(ray);
-        LockSelection();
+        if (lastHighlighted != null)
+        {
+            Deselect(ray);
+            LockSelection();
+        }
+        
         if (selectionLocked)
         {
             MoveObjectToRay(ray);
+            DeleteObject();
+            RotateObject();
+        }
+    }
+
+    private void RotateObject()
+    {
+        if (SteamVR_Input.GetState("SnapTurnLeft", hand.handType))
+        {
+            lastSelected.Rotate(0, rotationDegree, 0);
+        }
+        if (SteamVR_Input.GetState("SnapTurnRight", hand.handType))
+        {
+            lastSelected.Rotate(0, -rotationDegree, 0);
+        }
+    }
+
+    private void DeleteObject()
+    {
+        if (SteamVR_Actions._default.GrabGrip.GetStateDown(hand.otherHand.handType))
+        {
+            GameObject.Destroy(lastSelected.gameObject);
+            lastSelected = null;
         }
     }
 
     private void Deselect(Ray ray)
     {
-        if (lastHighlighted != null)
-        {
-            // prevents accidental deselection
-            Vector3 vector1 = ray.direction;
-            Vector3 vector2 = lastHighlighted.position - ray.origin;
-            float errorPercentage;
-            errorPercentage = Vector3.Dot(vector1.normalized, vector2.normalized);
+        // prevents accidental deselection
+        Vector3 vector1 = ray.direction;
+        Vector3 vector2 = lastHighlighted.position - ray.origin;
+        float errorPercentage;
+        errorPercentage = Vector3.Dot(vector1.normalized, vector2.normalized);
 
-            if (errorPercentage < selectionPrecision && !selectionLocked)
-            {
-                selectionInteractable.OnHandHoverEnd(hand);
-                lastHighlighted = null;
-            }
+        if (errorPercentage < selectionPrecision && !selectionLocked)
+        {
+            selectionInteractable.OnHandHoverEnd(hand);
+            lastHighlighted = null;
         }
     }
 
@@ -134,8 +137,6 @@ public class InteractionManager : MonoBehaviour
             lastSelected.gameObject.GetComponent<Rigidbody>().isKinematic = false;
             lastSelected = null;
             selectionLocked = false;
-            waitUp = 0;
-            waitDown = 0;
         }
     }
 
@@ -143,39 +144,19 @@ public class InteractionManager : MonoBehaviour
     {
         Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
 
-        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, 1 << LayerMask.NameToLayer("Floor"))) //if raycast is hitting the floor
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, 1 << LayerMask.NameToLayer("Surface"))) //if raycast is hitting the surface
         {
-            hittingWhat = hit.transform.gameObject.name;
             lastHit = hit.point;
-            waitUp = 0;
-            if (waitDown < waitTillMove) //if we've been up before we count so to prevent accidental drop
-            {
-                waitDown += 1;
-                MoveVertical(rb); // otherwise we stay in the air
-            }
-            else //if countdown done we go to the floor (also default if horizontal movement set to default)
-            {
-                MoveHorizontal(rb);
-            }
+            MoveHorizontal(rb);
 
         } else //if we don't hit the floor
         {
-            //hittingWhat = hit.transform.gameObject.name;
-            waitDown = 0;
-            if (waitUp < waitTillMove) // we count to prewent accidental lift (also default if vertical movement set to default)
-            {
-                waitUp += 1;
-                MoveHorizontal(rb); // otherwise we stay on the floor
-            }
-            else // if countdown done we lift the object
-            {
-                MoveVertical(rb);
-            }
+            MoveVertical(rb);
         }
 
     }
 
-    private void MoveVertical(Rigidbody rb) // up, down
+    private void MoveVertical(Rigidbody rb) // gameobject on the stick
     {
         rb.isKinematic = true;
         lastSelected.parent = handAttachmentPoint.transform;
