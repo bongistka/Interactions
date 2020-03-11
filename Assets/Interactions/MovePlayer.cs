@@ -28,16 +28,29 @@ public class MovePlayer : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player"))
         {
-            Debug.Log("Player has entered the teleport area");
-            teleporting.InitiateTeleportFade();
-            StartCoroutine("MoveOrigin");
+            if (!wasTeleported)
+            {
+                Debug.Log("initiating teleport to " + otherTeleportPoint.title);
+                teleporting.InitiateTeleportFade();
+                StartCoroutine("MoveOrigin");
+            }
         }
     }
 
-     IEnumerator MoveOrigin()
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            wasTeleported = false;
+        }
+    }
+
+
+    IEnumerator MoveOrigin()
      {
         yield return new WaitForSeconds(teleporting.teleportFadeTime);
         Vector3 difference = thisTeleportPoint.gameObject.transform.position - otherTeleportPoint.gameObject.transform.position;
         origin.transform.position += difference;
+        otherTeleportPoint.gameObject.GetComponentInChildren<MovePlayer>().wasTeleported = true;
      }
 }
