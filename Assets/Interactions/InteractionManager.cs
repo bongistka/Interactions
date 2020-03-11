@@ -13,12 +13,26 @@ public class InteractionManager : MonoBehaviour
     };
     public Handedness handedness;
 
+    public enum DefaultMovement
+    {
+        horizontal,
+        vertical,
+    };
+    [Tooltip("Preferred type of movement.")]
+    public DefaultMovement defaultMovement; 
+
     private GameObject handAttachmentPoint;
     private Hand hand;
 
     public float rayDistance = 100;
+    public int waitTillMove = 2;
+
+    [Tooltip("Selection error threshold, the higher the more precise but harder to select.")]
     [Range(0.0f, 1.0f)]
-    public float selectionPrecision = 0.8f; // selection error threshold, the higher the more precise but harder to select
+    public float selectionPrecision = 0.8f;
+    [Tooltip("Speed of horizontal lerp.")]
+    [Range(1.0f, 5.0f)]
+    public float movementSpeed = 2.0f;
 
     [SerializeField] private Transform lastHighlighted;
     [SerializeField] private Transform lastSelected;
@@ -28,12 +42,9 @@ public class InteractionManager : MonoBehaviour
 
     private Vector3 lastHit;
 
-    [Range(1.0f, 5.0f)]
-    public float movementSpeed = 2.0f;
-
-    public int waitTillMove = 20;
-    private int waitUp = 0;
-    private int waitDown = 0;
+    [SerializeField] private int waitUp = 0;
+    [SerializeField] private int waitDown = 0;
+    public string hittingWhat;
 
     // Start is called before the first frame update
     void Start()
@@ -48,6 +59,16 @@ public class InteractionManager : MonoBehaviour
                 break;
         }
         hand = handAttachmentPoint.GetComponentInParent<Hand>();
+
+        switch (defaultMovement)
+        {
+            case DefaultMovement.horizontal:
+                waitDown = waitTillMove;
+                break;
+            case DefaultMovement.vertical:
+                waitUp = waitTillMove;
+                break;
+        }
     }
 
     // Update is called once per frame
@@ -109,6 +130,8 @@ public class InteractionManager : MonoBehaviour
         if (SteamVR_Actions._default.GrabPinch.GetStateUp(hand.handType))
         {
             lastSelected.gameObject.layer = 0;
+            lastSelected.parent = null;
+            lastSelected.gameObject.GetComponent<Rigidbody>().isKinematic = false;
             lastSelected = null;
             selectionLocked = false;
             waitUp = 0;
@@ -120,34 +143,48 @@ public class InteractionManager : MonoBehaviour
     {
         Rigidbody rb = lastSelected.gameObject.GetComponent<Rigidbody>();
 
-        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, 1 << LayerMask.NameToLayer("Floor")))
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, 1 << LayerMask.NameToLayer("Floor"))) //if raycast is hitting the floor
         {
+            hittingWhat = hit.transform.gameObject.name;
+            lastHit = hit.point;
             waitUp = 0;
-            if (waitDown < waitTillMove)
+            if (waitDown < waitTillMove) //if we've been up before we count so to prevent accidental drop
             {
                 waitDown += 1;
+                MoveVertical(rb); // otherwise we stay in the air
             }
-            else
+            else //if countdown done we go to the floor (also default if horizontal movement set to default)
             {
-
+                MoveHorizontal(rb);
             }
 
-            lastHit = hit.point;
-            rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime * movementSpeed));
-        } else
+        } else //if we don't hit the floor
         {
+            //hittingWhat = hit.transform.gameObject.name;
             waitDown = 0;
-            if (waitUp < waitTillMove)
+            if (waitUp < waitTillMove) // we count to prewent accidental lift (also default if vertical movement set to default)
             {
                 waitUp += 1;
+                MoveHorizontal(rb); // otherwise we stay on the floor
             }
-            else
+            else // if countdown done we lift the object
             {
-
+                MoveVertical(rb);
             }
-            
-            rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime * movementSpeed));
         }
 
+    }
+
+    private void MoveVertical(Rigidbody rb) // up, down
+    {
+        rb.isKinematic = true;
+        lastSelected.parent = handAttachmentPoint.transform;
+    }
+
+    private void MoveHorizontal(Rigidbody rb) // <----->
+    {
+        rb.isKinematic = false;
+        lastSelected.parent = null;
+        rb.MovePosition(Vector3.Lerp(lastSelected.transform.position, lastHit, Time.deltaTime * movementSpeed));
     }
 }

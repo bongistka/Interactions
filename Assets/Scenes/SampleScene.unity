@@ -151,12 +151,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   handedness: 0
+  defaultMovement: 0
   rayDistance: 100
+  waitTillMove: 2
   selectionPrecision: 0.8
+  movementSpeed: 2
   lastHighlighted: {fileID: 0}
   lastSelected: {fileID: 0}
-  movementSpeed: 2
-  waitTillMove: 20
+  waitUp: 0
+  waitDown: 0
+  hittingWhat: 
 --- !u!4 &77810273
 Transform:
   m_ObjectHideFlags: 0
