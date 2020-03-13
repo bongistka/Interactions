@@ -887,6 +887,7 @@ namespace Valve.VR.InteractionSystem
 				}
 			}
 
+			/*
 			if ( teleportingToMarker.ShouldMovePlayer() )
 			{
 				Vector3 playerFeetOffset = player.trackingOriginTransform.position - player.feetPositionGuess;
@@ -901,7 +902,7 @@ namespace Valve.VR.InteractionSystem
 			{
 				teleportingToMarker.TeleportPlayer( pointedAtPosition );
 			}
-
+			*/
 			Teleport.Player.Send( pointedAtTeleportMarker );
 		}
 

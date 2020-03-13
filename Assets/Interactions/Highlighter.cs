@@ -7,7 +7,9 @@ using Valve.VR.InteractionSystem;
 public class Highlighter : MonoBehaviour
 {
     private TeleportPoint thisTeleportPoint;
+    [Tooltip("If one directional, this is ignored")]
     public TeleportPoint otherTeleportPoint;
+    public bool oneDirectional;
     private bool playerNearby;
 
     // Start is called before the first frame update
@@ -22,7 +24,10 @@ public class Highlighter : MonoBehaviour
         if (playerNearby)
         {
             thisTeleportPoint.Highlight(true);
-            otherTeleportPoint.Highlight(true);
+            if (!oneDirectional)
+            {
+                otherTeleportPoint.Highlight(true);
+            }
         } 
     }
 
@@ -40,7 +45,10 @@ public class Highlighter : MonoBehaviour
         {
             playerNearby = false;
             thisTeleportPoint.Highlight(false);
-            otherTeleportPoint.Highlight(false);
+            if (!oneDirectional)
+            {
+                otherTeleportPoint.Highlight(false);
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ public class MovePlayer : MonoBehaviour
         {
             if (!wasTeleported)
             {
-                Debug.Log("initiating teleport to " + otherTeleportPoint.title);
+                //Debug.Log("initiating teleport to " + otherTeleportPoint.title);
                 teleporting.InitiateTeleportFade();
                 StartCoroutine("MoveOrigin");
             }
